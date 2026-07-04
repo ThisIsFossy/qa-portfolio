@@ -120,49 +120,14 @@
 
 # 3. Баг-репорты
 
-## BUG-1: Поле "Last Name" не позволяет ввести данные на странице Checkout для пользователя error_user
+## BUG-1: Долгая загрузка страницы товаров при входе под performance_glitch_user
 
-Предусловие:  
-Пользователь авторизован под `error_user / secret_sauce`.
+Окружение:
+- Browser: Yandex Browser / Chrome
+- User: `performance_glitch_user / secret_sauce`
+- Page: Login / Inventory
 
-Шаги:
-1. Открыть https://www.saucedemo.com
-2. Войти под `error_user / secret_sauce`
-3. Добавить товар в корзину
-4. Перейти в корзину
-5. Нажать `Checkout`
-6. Попытаться ввести `Taran` в поле `Last Name`
-
-Ожидаемый результат:  
-Текст вводится в поле `Last Name`.
-
-Фактический результат:  
-Поле не принимает ввод, текст не отображается.
-
----
-
-## BUG-2: Кнопка "Remove" не удаляет товар для пользователя error_user
-
-Предусловие:  
-Пользователь авторизован под `error_user / secret_sauce`.
-
-Шаги:
-1. Открыть https://www.saucedemo.com
-2. Войти под `error_user / secret_sauce`
-3. Нажать `Add to cart` у любого товара
-4. Нажать `Remove` у добавленного товара
-
-Ожидаемый результат:  
-Товар удаляется из корзины, кнопка меняется на `Add to cart`.
-
-Фактический результат:  
-Товар остаётся в корзине, кнопка `Remove` не меняется.
-
----
-
-## BUG-3: Долгая загрузка страницы товаров при работе с performance_glitch_user
-
-Предусловие:  
+Предусловие:
 Пользователь находится на странице логина.
 
 Шаги:
@@ -170,12 +135,113 @@
 2. Ввести логин `performance_glitch_user`
 3. Ввести пароль `secret_sauce`
 4. Нажать `Login`
+5. Открыть DevTools → Network
+6. Проверить время загрузки запросов
 
 Ожидаемый результат:  
 Страница товаров открывается за 1–2 секунды.
 
 Фактический результат:  
 Страница товаров загружается около 5–7 секунд.
+
+Console:
+```text
+Критичных ошибок, связанных с загрузкой страницы, не обнаружено.
+```
+
+Network:
+```text
+Самый долгий запрос: favicon.ico — около 96 ms.
+Запросов длительностью 5–7 секунд не обнаружено.
+```
+
+Вывод:  
+Долгая загрузка, вероятно, связана с задержкой на стороне frontend/JavaScript, а не с сетевыми запросами.
+
+Severity: Minor  
+Priority: Low
+
+---
+
+## BUG-2: Кнопка "Remove" не удаляет товар для пользователя error_user
+
+Окружение:
+- Browser: Yandex Browser / Chrome
+- User: `error_user / secret_sauce`
+- Page: Inventory
+
+Предусловие:
+Пользователь авторизован под `error_user / secret_sauce`.
+
+Шаги:
+1. Открыть https://www.saucedemo.com
+2. Войти под `error_user / secret_sauce`
+3. Нажать `Add to cart` у любого товара
+4. Нажать `Remove` у добавленного товара
+5. Открыть DevTools → Console и Network
+
+Ожидаемый результат:  
+Товар удаляется из корзины, кнопка меняется на `Add to cart`. Ошибки в Console и Network отсутствуют.
+
+Фактический результат:  
+Товар не удаляется из корзины. Кнопка `Remove` не меняется.
+
+Console:
+```text
+Uncaught Error: Failed to remove item from cart.
+at InventoryListItem.jsx:66:15
+```
+
+Network:
+```text
+Status: 503 Service Unavailable
+```
+
+Severity: Major  
+Priority: Medium
+
+---
+
+## BUG-3: Поле "Last Name" не принимает ввод для пользователя error_user на странице Checkout
+
+Окружение:
+- Browser: Yandex Browser / Chrome
+- User: `error_user / secret_sauce`
+- Page: Checkout Step One
+
+Предусловие:
+Пользователь авторизован под `error_user / secret_sauce`, в корзине есть товар.
+
+Шаги:
+1. Открыть https://www.saucedemo.com
+2. Войти под `error_user / secret_sauce`
+3. Добавить товар в корзину
+4. Перейти в корзину
+5. Нажать `Checkout`
+6. Ввести значение в поле `First Name`
+7. Попытаться ввести значение в поле `Last Name`
+8. Открыть DevTools → Console и Network
+
+Ожидаемый результат:  
+Пользователь может ввести текст в поле `Last Name`. Ошибки в Console и Network отсутствуют.
+
+Фактический результат:  
+Поле `Last Name` не принимает ввод, текст не отображается.
+
+Console:
+```text
+Uncaught TypeError: Cannot read properties of undefined (reading 'value')
+at onChange (CheckOutStepOne.jsx:31:47)
+```
+
+Network:
+```text
+POST https://submit.backtrace.io/UNIVERSE/TOKEN/json
+Status: 503 Service Unavailable
+```
+
+Severity: Major  
+Priority: Medium
 
 ---
 
